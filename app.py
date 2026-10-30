@@ -166,7 +166,32 @@ with shoes_tab:
         .agg(**aggregations)
         .reset_index()
     )
+    # Importation des caractéristiques techniques des chaussures
+    specs_file = BASE_DIR / "data" / "shoe_specs.csv"
 
+    if specs_file.exists():
+        shoe_specs = pd.read_csv(specs_file, skipinitialspace=True)
+        shoe_specs["shoes"] = shoe_specs["shoes"].astype(str).str.strip()
+
+        numeric_columns = [
+            "weight_g",
+            "drop_mm",
+            "stack_heel_mm",
+            "stack_forefoot_mm",
+        ]
+
+        for column in numeric_columns:
+            if column in shoe_specs.columns:
+                shoe_specs[column] = pd.to_numeric(
+                    shoe_specs[column], errors="coerce"
+                )
+
+        shoe_stats = shoe_stats.merge(
+            shoe_specs,
+            on="shoes",
+            how="left",
+        )
+        
     shoe_stats["Allure moyenne"] = shoe_stats["mean_pace_min_km"].map(
         lambda value: format_pace(value) if pd.notna(value) else "—"
     )
@@ -188,7 +213,19 @@ with shoes_tab:
         display_data["Cadence moyenne (pas/min)"] = (
             shoe_stats["mean_cadence_spm"].round(1)
         )
+    # Ajout des caractéristiques techniques au tableau
+    technical_columns = {
+        "brand": "Marque",
+        "category": "Catégorie",
+        "weight_g": "Poids (g)",
+        "drop_mm": "Drop (mm)",
+        "stack_heel_mm": "Hauteur talon (mm)",
+        "stack_forefoot_mm": "Hauteur avant-pied (mm)",
+    }
 
+    for column, label in technical_columns.items():
+        if column in shoe_stats.columns:
+            display_data[label] = shoe_stats[column]
     st.dataframe(display_data, use_container_width=True, hide_index=True)
 
     # Comparaison des distances cumulées
