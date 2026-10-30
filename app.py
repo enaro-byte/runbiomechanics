@@ -144,34 +144,112 @@ with physiology_tab:
         "ne permet pas de tirer une conclusion médicale ou biomécanique."
     )
 
+
 with shoes_tab:
     st.markdown("### Comparaison descriptive des chaussures")
+
+    # Regroupement des données par modèle
+    aggregations = {
+        "sessions": ("distance_km", "count"),
+        "total_distance_km": ("distance_km", "sum"),
+        "mean_pace_min_km": ("pace_min_km", "mean"),
+    }
+
+    if "avg_hr_bpm" in filtered.columns:
+        aggregations["mean_hr_bpm"] = ("avg_hr_bpm", "mean")
+
+    if "cadence_spm" in filtered.columns:
+        aggregations["mean_cadence_spm"] = ("cadence_spm", "mean")
+
     shoe_stats = (
         filtered.groupby("shoes", dropna=False)
-        .agg(
-            sessions=("distance_km", "count"),
-            total_distance_km=("distance_km", "sum"),
-            mean_pace_min_km=("pace_min_km", "mean"),
-        )
+        .agg(**aggregations)
         .reset_index()
     )
-    shoe_stats["allure_moyenne"] = shoe_stats["mean_pace_min_km"].map(format_pace)
-    st.dataframe(
-        shoe_stats[["shoes", "sessions", "total_distance_km", "allure_moyenne"]],
-        use_container_width=True,
-        hide_index=True,
+
+    shoe_stats["Allure moyenne"] = shoe_stats["mean_pace_min_km"].map(
+        lambda value: format_pace(value) if pd.notna(value) else "—"
     )
-    if len(shoe_stats) > 1:
-        shoe_chart = px.bar(
-            shoe_stats,
-            x="shoes",
-            y="total_distance_km",
-            labels={"shoes": "Chaussure", "total_distance_km": "Distance cumulée (km)"},
+
+    st.markdown("#### Indicateurs par chaussure")
+
+    display_data = shoe_stats[
+        ["shoes", "sessions", "total_distance_km", "Allure moyenne"]
+    ].rename(columns={
+        "shoes": "Chaussure",
+        "sessions": "Nombre de sorties",
+        "total_distance_km": "Distance cumulée (km)",
+    })
+
+    if "mean_hr_bpm" in shoe_stats.columns:
+        display_data["FC moyenne (bpm)"] = shoe_stats["mean_hr_bpm"].round(1)
+
+    if "mean_cadence_spm" in shoe_stats.columns:
+        display_data["Cadence moyenne (pas/min)"] = (
+            shoe_stats["mean_cadence_spm"].round(1)
         )
-        st.plotly_chart(shoe_chart, use_container_width=True)
+
+    st.dataframe(display_data, use_container_width=True, hide_index=True)
+
+    # Comparaison des distances cumulées
+    st.markdown("#### Kilométrage par chaussure")
+
+    distance_chart = px.bar(
+        shoe_stats,
+        x="shoes",
+        y="total_distance_km",
+        color="shoes",
+        labels={
+            "shoes": "Modèle",
+            "total_distance_km": "Distance cumulée (km)",
+        },
+        text_auto=".1f",
+    )
+    st.plotly_chart(distance_chart, use_container_width=True)
+
+    # Comparaison des allures
+    st.markdown("#### Allure moyenne par chaussure")
+
+    pace_chart = px.bar(
+        shoe_stats,
+        x="shoes",
+        y="mean_pace_min_km",
+        color="shoes",
+        labels={
+            "shoes": "Modèle",
+            "mean_pace_min_km": "Allure moyenne (min/km)",
+        },
+    )
+    st.plotly_chart(pace_chart, use_container_width=True)
+
+    # Répartition des surfaces
+    if "surface" in filtered.columns:
+        st.markdown("#### Répartition des surfaces")
+
+        surface_data = (
+            filtered.groupby(["shoes", "surface"])
+            .size()
+            .reset_index(name="sessions")
+        )
+
+        surface_chart = px.bar(
+            surface_data,
+            x="shoes",
+            y="sessions",
+            color="surface",
+            barmode="stack",
+            labels={
+                "shoes": "Chaussure",
+                "sessions": "Nombre de sorties",
+                "surface": "Surface",
+            },
+        )
+        st.plotly_chart(surface_chart, use_container_width=True)
+
     st.warning(
-        "Cette comparaison est descriptive, pas un test scientifique de chaussures : "
-        "les parcours, allures, conditions météo et niveaux de fatigue ne sont pas contrôlés."
+        "Ces comparaisons sont descriptives. Elles ne démontrent pas qu'un modèle "
+        "est plus performant ou plus efficace qu'un autre. Les conditions de course, "
+        "l'allure, le terrain et la fatigue ne sont pas contrôlés."
     )
 
 with help_tab:
