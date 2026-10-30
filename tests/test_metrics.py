@@ -1,10 +1,10 @@
 import pandas as pd
 
-from metrics import calculate_pace, prepare_runs
+from metrics import prepare_runs, format_pace, summarize_runs
 
 
-def test_calculate_pace():
-    assert calculate_pace(10, 60) == 6.0
+def test_format_pace():
+    assert format_pace(6.0) == "6:00 min/km"
 
 
 def test_prepare_runs_calculates_pace():
@@ -29,3 +29,16 @@ def test_prepare_runs_removes_invalid_distance():
     result = prepare_runs(df)
 
     assert len(result) == 1
+
+
+def test_summarize_runs():
+    df = pd.DataFrame({
+        "distance_km": [5.0, 10.0],
+        "duration_min": [30.0, 60.0],
+    })
+
+    result = summarize_runs(df)
+
+    assert result["sessions"] == 2
+    assert result["distance_km"] == 15.0
+    assert result["pace_min_km"] == 6.0
