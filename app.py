@@ -258,7 +258,36 @@ with shoes_tab:
         },
     )
     st.plotly_chart(pace_chart, use_container_width=True)
+    # Relation entre le poids de la chaussure et l'allure moyenne
+    if "weight_g" in shoe_stats.columns:
+        weight_data = shoe_stats.dropna(
+            subset=["weight_g", "mean_pace_min_km"]
+        )
 
+        if not weight_data.empty:
+            st.markdown("#### Poids de la chaussure et allure moyenne")
+
+            weight_chart = px.scatter(
+                weight_data,
+                x="weight_g",
+                y="mean_pace_min_km",
+                color="shoes",
+                size="sessions",
+                hover_data=[
+                    "shoes",
+                    "sessions",
+                    "mean_hr_bpm",
+                    "mean_cadence_spm",
+                ],
+                labels={
+                    "weight_g": "Poids de la chaussure (g)",
+                    "mean_pace_min_km": "Allure moyenne (min/km)",
+                    "shoes": "Chaussure",
+                    "sessions": "Nombre de sorties",
+                },
+            )
+
+            st.plotly_chart(weight_chart, use_container_width=True)
     # Répartition des surfaces
     if "surface" in filtered.columns:
         st.markdown("#### Répartition des surfaces")
