@@ -1,0 +1,11 @@
+[project]
+name = "runbiomechanics"
+version = "0.1.0"
+description = "A simple open-source dashboard to explore running data."
+readme = "README.md"
+requires-python = ">=3.10"
+license = {file = "LICENSE"}
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
