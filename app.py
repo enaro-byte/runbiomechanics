@@ -260,6 +260,15 @@ with biomechanics_tab:
         ),
     ]
 
+        st.markdown("#### Biomécanique selon le kilométrage")
+
+        mileage_metrics = [
+            ("stride_length_m", "Longueur de foulée", "Longueur (m)"),
+            ("cadence_spm", "Cadence", "Cadence (pas/min)"),
+            ("vertical_oscillation_cm", "Oscillation verticale", "Oscillation (cm)"),
+            ("ground_contact_time_ms", "Temps de contact au sol", "Temps (ms)")
+        ]
+
         for column, title, axis_label in mileage_metrics:
             st.markdown(f"##### {title}")
 
