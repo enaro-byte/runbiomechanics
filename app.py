@@ -96,9 +96,9 @@ def prepare_garmin_runs(raw_data):
         runs["Ascension totale"], errors="coerce"
     )
 
-# Informations sur les chaussures utilisées
-result["shoes"] = "Nike Pegasus 41"
-result["surface"] = "Non renseignée"
+    # Informations sur les chaussures utilisées
+    result["shoes"] = "Nike Pegasus 41"
+    result["surface"] = "Non renseignée"
 
     return result.reset_index(drop=True)
 
