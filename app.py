@@ -33,11 +33,87 @@ with st.sidebar:
     use_demo = st.checkbox("Charger les données de démonstration", value=uploaded_file is None)
     st.caption("Le format CSV attendu est expliqué dans l'onglet « Aide ». ")
 
-try:
-    if uploaded_file is not None:
-        raw_data = pd.read_csv(uploaded_file)
+def prepare_garmin_runs(raw_data):
+    """Convertit l'export Garmin en données compatibles avec RunBiomechanics."""
+
+    if "Type d'activité" not in raw_data.columns:
+        raise ValueError("Ce fichier ne semble pas être un export Garmin Connect.")
+
+    # On conserve uniquement les sorties de course à pied
+    runs = raw_data[
+        raw_data["Type d'activité"].astype(str).str.strip() == "Course à pied"
+    ].copy()
+
+    if runs.empty:
+        return pd.DataFrame(
+            columns=["date", "distance_km", "duration_min"]
+        )
+
+    # Conversion des durées Garmin en minutes
+    duration = pd.to_timedelta(runs["Durée"], errors="coerce")
+
+    result = pd.DataFrame(index=runs.index)
+
+    result["date"] = pd.to_datetime(runs["Date"], errors="coerce")
+    result["distance_km"] = pd.to_numeric(
+        runs["Distance"], errors="coerce"
+    )
+    result["duration_min"] = duration.dt.total_seconds() / 60
+
+    # Données physiologiques
+    result["avg_hr_bpm"] = pd.to_numeric(
+        runs["Fréquence cardiaque moyenne"], errors="coerce"
+    )
+    result["max_hr_bpm"] = pd.to_numeric(
+        runs["Fréquence cardiaque maximale"], errors="coerce"
+    )
+    result["cadence_spm"] = pd.to_numeric(
+        runs["Cadence de course moyenne"], errors="coerce"
+    )
+
+    # Données biomécaniques
+    result["stride_length_m"] = pd.to_numeric(
+        runs["Longueur moyenne des foulées"], errors="coerce"
+    )
+    result["vertical_ratio_pct"] = pd.to_numeric(
+        runs["Rapport vertical moyen"], errors="coerce"
+    )
+    result["vertical_oscillation_cm"] = pd.to_numeric(
+        runs["Oscillation verticale moyenne"], errors="coerce"
+    )
+    result["ground_contact_time_ms"] = pd.to_numeric(
+        runs["Temps de contact moyen avec le sol"], errors="coerce"
+    )
+
+    # Puissance et dénivelé
+    result["avg_power_w"] = pd.to_numeric(
+        runs["Puissance moyenne"], errors="coerce"
+    )
+    result["max_power_w"] = pd.to_numeric(
+        runs["Puissance max."], errors="coerce"
+    )
+    result["elevation_m"] = pd.to_numeric(
+        runs["Ascension totale"], errors="coerce"
+    )
+
+    # Informations non encore disponibles dans cet export
+    result["shoes"] = "Non renseignées"
+    result["surface"] = "Non renseignée"
+
+    return result.reset_index(drop=True)
+
+
+if uploaded_file is not None:
+    raw_data = pd.read_csv(uploaded_file, encoding="utf-8-sig")
+
+    if "Type d'activité" in raw_data.columns:
+        garmin_data = prepare_garmin_runs(raw_data)
+        data = prepare_runs(garmin_data)
+        data_source = "Garmin Connect"
+    else:
         data = prepare_runs(raw_data)
         data_source = "Fichier importé"
+
     elif use_demo:
         data = prepare_runs(pd.read_csv(SAMPLE_FILE))
         data_source = "Données de démonstration"
