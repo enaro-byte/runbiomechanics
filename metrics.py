@@ -5,13 +5,22 @@ from __future__ import annotations
 import pandas as pd
 
 REQUIRED_COLUMNS = ("date", "distance_km", "duration_min")
+
 NUMERIC_COLUMNS = (
     "distance_km",
     "duration_min",
     "avg_hr_bpm",
     "cadence_spm",
     "elevation_m",
+    "max_hr_bpm",
+    "stride_length_m",
+    "vertical_ratio_pct",
+    "vertical_oscillation_cm",
+    "ground_contact_time_ms",
+    "avg_power_w",
+    "max_power_w",
 )
+
 OPTIONAL_COLUMNS = ("avg_hr_bpm", "cadence_spm", "elevation_m", "shoes", "surface")
 
 
