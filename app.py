@@ -114,14 +114,13 @@ if uploaded_file is not None:
         data = prepare_runs(raw_data)
         data_source = "Fichier importé"
 
-    elif use_demo:
-        data = prepare_runs(pd.read_csv(SAMPLE_FILE))
-        data_source = "Données de démonstration"
-    else:
-        st.warning("Importe un CSV ou active les données de démonstration dans la barre latérale.")
-        st.stop()
-except (ValueError, pd.errors.ParserError, UnicodeDecodeError) as error:
-    st.error(f"Impossible de lire ce fichier : {error}")
+elif use_demo:
+    raw_data = pd.read_csv("data/sample_runs.csv")
+    data = prepare_runs(raw_data)
+    data_source = "Données de démonstration"
+
+else:
+    st.info("Importe un fichier CSV ou active les données de démonstration.")
     st.stop()
 
 if data.empty:
