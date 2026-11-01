@@ -238,61 +238,48 @@ with biomechanics_tab:
     )
 
     biomechanics_metrics = [
-        (
-            "stride_length_m",
-            "Longueur moyenne de foulée",
-            "Longueur (m)",
-        ),
-        (
-            "cadence_spm",
-            "Cadence de course",
-            "Cadence (pas/min)",
-        ),
-        (
-            "vertical_oscillation_cm",
-            "Oscillation verticale",
-            "Oscillation (cm)",
-        ),
-        (
-            "ground_contact_time_ms",
-            "Temps de contact au sol",
-            "Temps (ms)",
-        ),
+        ("stride_length_m", "Longueur moyenne de foulée", "Longueur (m)"),
+        ("cadence_spm", "Cadence de course", "Cadence (pas/min)"),
+        ("vertical_oscillation_cm", "Oscillation verticale", "Oscillation (cm)"),
+        ("ground_contact_time_ms", "Temps de contact au sol", "Temps (ms)"),
     ]
 
-        st.markdown("#### Biomécanique selon le kilométrage")
+    for column, title, axis_label in biomechanics_metrics:
+        st.markdown(f"#### {title}")
 
-        mileage_metrics = [
-            ("stride_length_m", "Longueur de foulée", "Longueur (m)"),
-            ("cadence_spm", "Cadence", "Cadence (pas/min)"),
-            ("vertical_oscillation_cm", "Oscillation verticale", "Oscillation (cm)"),
-            ("ground_contact_time_ms", "Temps de contact au sol", "Temps (ms)")
-        ]
+        if column not in filtered.columns:
+            st.info(f"L'indicateur {title} n'est pas présent dans les données.")
+            continue
 
-        for column, title, axis_label in mileage_metrics:
-            st.markdown(f"##### {title}")
+        chart_data = filtered.dropna(subset=[column]).sort_values("date")
 
-            if column not in shoe_history.columns:
-                st.info(f"L'indicateur {title} n'est pas présent dans les données.")
-                continue
+        if not chart_data.empty:
+            chart = px.line(
+                chart_data,
+                x="date",
+                y=column,
+                markers=True,
+                hover_data=["distance_km", "pace_label"],
+                labels={
+                    "date": "Date",
+                    column: axis_label,
+                    "distance_km": "Distance (km)",
+                    "pace_label": "Allure",
+                },
+            )
 
-            chart_data = shoe_history.dropna(subset=[column])
+            st.plotly_chart(chart, use_container_width=True)
+            st.caption(
+                f"{len(chart_data)} sortie(s) avec une donnée disponible."
+            )
+        else:
+            st.info(f"Aucune donnée disponible pour {title}.")
 
-            if not chart_data.empty:
-                chart = px.scatter(
-                    chart_data,
-                    x="shoe_cumulative_km",
-                    y=column,
-                    hover_data=["date", "pace_label"],
-                    labels={
-                        "shoe_cumulative_km": "Kilométrage de la paire (km)",
-                        column: axis_label
-                    }
-                )
-
-                st.plotly_chart(chart, use_container_width=True)
-            else:
-                st.info(f"Aucune donnée disponible pour {title}.")
+    st.warning(
+        "Ces graphiques permettent d'observer des évolutions et des associations. "
+        "Ils ne permettent pas, à eux seuls, de conclure à une amélioration "
+        "ou à une dégradation de ta technique de course."
+    )
 
 with shoes_tab:
     st.markdown("### Comparaison descriptive des chaussures")
