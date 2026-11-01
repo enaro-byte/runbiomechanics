@@ -96,9 +96,9 @@ def prepare_garmin_runs(raw_data):
         runs["Ascension totale"], errors="coerce"
     )
 
-    # Informations non encore disponibles dans cet export
-    result["shoes"] = "Non renseignées"
-    result["surface"] = "Non renseignée"
+# Informations sur les chaussures utilisées
+result["shoes"] = "Nike Pegasus 41"
+result["surface"] = "Non renseignée"
 
     return result.reset_index(drop=True)
 
@@ -134,7 +134,16 @@ with st.sidebar:
     selected_shoes = st.multiselect("Chaussures", shoe_names, default=shoe_names)
     surface_names = sorted(data["surface"].unique().tolist())
     selected_surfaces = st.multiselect("Surfaces", surface_names, default=surface_names)
-
+    if data_source == "Garmin Connect":
+        initial_shoe_km = st.number_input(
+            "Kilométrage avant le début du suivi (km)",
+            min_value=0.0,
+            value=0.0,
+            step=10.0,
+            help="Indique les kilomètres déjà parcourus avec cette paire avant le premier enregistrement importé."
+        )
+    else:
+        initial_shoe_km = 0.0
 filtered = data[
     data["shoes"].isin(selected_shoes) & data["surface"].isin(selected_surfaces)
 ].copy()
@@ -289,7 +298,70 @@ with biomechanics_tab:
 
 with shoes_tab:
     st.markdown("### Comparaison descriptive des chaussures")
+    st.markdown("### Suivi de tes Nike Pegasus 41")
 
+    shoe_history = data[
+        data["shoes"] == "Nike Pegasus 41"
+    ].sort_values("date").copy()
+
+    if not shoe_history.empty:
+
+        shoe_history["shoe_cumulative_km"] = (
+            initial_shoe_km + shoe_history["distance_km"].cumsum()
+        )
+
+        total_shoe_km = shoe_history["shoe_cumulative_km"].iloc[-1]
+
+        st.metric(
+            "Kilométrage cumulé de ta paire",
+            f"{total_shoe_km:.1f} km"
+        )
+
+        st.markdown("#### Évolution du kilométrage")
+
+        mileage_chart = px.line(
+            shoe_history,
+            x="date",
+            y="shoe_cumulative_km",
+            markers=True,
+            labels={
+                "date": "Date",
+                "shoe_cumulative_km": "Kilométrage cumulé (km)"
+            }
+        )
+
+        st.plotly_chart(mileage_chart, use_container_width=True)
+
+        st.markdown("#### Biomécanique selon le kilométrage")
+
+        mileage_metrics = [
+            ("stride_length_m", "Longueur de foulée", "Longueur (m)"),
+            ("cadence_spm", "Cadence", "Cadence (pas/min)"),
+            ("vertical_oscillation_cm", "Oscillation verticale", "Oscillation (cm)"),
+            ("ground_contact_time_ms", "Temps de contact au sol", "Temps (ms)")
+        ]
+
+        for column, title, axis_label in mileage_metrics:
+            chart_data = shoe_history.dropna(subset=[column])
+
+            if not chart_data.empty:
+                st.markdown(f"##### {title}")
+
+                chart = px.scatter(
+                    chart_data,
+                    x="shoe_cumulative_km",
+                    y=column,
+                    hover_data=["date", "pace_label"],
+                    labels={
+                        "shoe_cumulative_km": "Kilométrage de la paire (km)",
+                        column: axis_label
+                    }
+                )
+
+                st.plotly_chart(chart, use_container_width=True)
+
+    else:
+        st.info("Aucune sortie associée aux Nike Pegasus 41.")
     # Regroupement des données par modèle
     aggregations = {
         "sessions": ("distance_km", "count"),
