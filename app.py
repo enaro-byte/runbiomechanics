@@ -260,41 +260,30 @@ with biomechanics_tab:
         ),
     ]
 
-    for column, title, axis_label in biomechanics_metrics:
-        st.markdown(f"#### {title}")
+        for column, title, axis_label in mileage_metrics:
+            st.markdown(f"##### {title}")
 
-        if column in filtered.columns:
-            chart_data = filtered.dropna(subset=[column]).sort_values("date")
+            if column not in shoe_history.columns:
+                st.info(f"L'indicateur {title} n'est pas présent dans les données.")
+                continue
+
+            chart_data = shoe_history.dropna(subset=[column])
 
             if not chart_data.empty:
-                chart = px.line(
+                chart = px.scatter(
                     chart_data,
-                    x="date",
+                    x="shoe_cumulative_km",
                     y=column,
-                    markers=True,
-                    hover_data=["distance_km", "pace_label"],
+                    hover_data=["date", "pace_label"],
                     labels={
-                        "date": "Date",
-                        column: axis_label,
-                        "distance_km": "Distance (km)",
-                        "pace_label": "Allure",
-                    },
+                        "shoe_cumulative_km": "Kilométrage de la paire (km)",
+                        column: axis_label
+                    }
                 )
 
                 st.plotly_chart(chart, use_container_width=True)
-                st.caption(
-                    f"{len(chart_data)} sortie(s) avec une donnée disponible."
-                )
             else:
-                st.info("Aucune donnée disponible pour cet indicateur.")
-        else:
-            st.info("Cet indicateur n'est pas présent dans le fichier importé.")
-
-    st.warning(
-        "Ces graphiques permettent d'observer des évolutions et des associations. "
-        "Ils ne permettent pas, à eux seuls, de conclure à une amélioration "
-        "ou à une dégradation de ta technique de course."
-    )
+                st.info(f"Aucune donnée disponible pour {title}.")
 
 with shoes_tab:
     st.markdown("### Comparaison descriptive des chaussures")
