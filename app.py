@@ -158,8 +158,8 @@ m4.metric(
     f"{summary['avg_hr_bpm']:.0f} bpm" if summary["avg_hr_bpm"] is not None else "Non renseignée",
 )
 
-overview_tab, physiology_tab, shoes_tab, help_tab = st.tabs(
-    ["Vue d'ensemble", "Indicateurs", "Chaussures", "Aide / CSV"]
+overview_tab, physiology_tab, biomechanics_tab, shoes_tab, help_tab = st.tabs(
+    ["Vue d'ensemble", "Indicateurs", "Biomécanique", "Chaussures", "Aide / CSV"]
 )
 
 with overview_tab:
@@ -219,6 +219,73 @@ with physiology_tab:
         "ne permet pas de tirer une conclusion médicale ou biomécanique."
     )
 
+
+with biomechanics_tab:
+    st.markdown("### Analyse de ta foulée")
+
+    st.write(
+        "Explore l'évolution de tes indicateurs biomécaniques "
+        "au fil de tes sorties de course à pied."
+    )
+
+    biomechanics_metrics = [
+        (
+            "stride_length_m",
+            "Longueur moyenne de foulée",
+            "Longueur (m)",
+        ),
+        (
+            "cadence_spm",
+            "Cadence de course",
+            "Cadence (pas/min)",
+        ),
+        (
+            "vertical_oscillation_cm",
+            "Oscillation verticale",
+            "Oscillation (cm)",
+        ),
+        (
+            "ground_contact_time_ms",
+            "Temps de contact au sol",
+            "Temps (ms)",
+        ),
+    ]
+
+    for column, title, axis_label in biomechanics_metrics:
+        st.markdown(f"#### {title}")
+
+        if column in filtered.columns:
+            chart_data = filtered.dropna(subset=[column]).sort_values("date")
+
+            if not chart_data.empty:
+                chart = px.line(
+                    chart_data,
+                    x="date",
+                    y=column,
+                    markers=True,
+                    hover_data=["distance_km", "pace_label"],
+                    labels={
+                        "date": "Date",
+                        column: axis_label,
+                        "distance_km": "Distance (km)",
+                        "pace_label": "Allure",
+                    },
+                )
+
+                st.plotly_chart(chart, use_container_width=True)
+                st.caption(
+                    f"{len(chart_data)} sortie(s) avec une donnée disponible."
+                )
+            else:
+                st.info("Aucune donnée disponible pour cet indicateur.")
+        else:
+            st.info("Cet indicateur n'est pas présent dans le fichier importé.")
+
+    st.warning(
+        "Ces graphiques permettent d'observer des évolutions et des associations. "
+        "Ils ne permettent pas, à eux seuls, de conclure à une amélioration "
+        "ou à une dégradation de ta technique de course."
+    )
 
 with shoes_tab:
     st.markdown("### Comparaison descriptive des chaussures")
