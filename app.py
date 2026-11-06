@@ -285,7 +285,7 @@ with shoes_tab:
     st.markdown("### Comparaison descriptive des chaussures")
     st.markdown("### Suivi de tes Nike Pegasus 41")
 
-        shoe_history = data[
+    shoe_history = data[
         data["shoes"] == "Nike Pegasus 41"
     ].sort_values("date").copy()
 
@@ -338,10 +338,10 @@ with shoes_tab:
 
         for column, title, axis_label in mileage_metrics:
             if column not in shoe_history.columns:
-    st.info(f"La colonne {column} est absente des données.")
-    continue
+                st.info(f"La colonne {column} est absente des données.")
+                continue
 
-chart_data = shoe_history.dropna(subset=[column])
+            chart_data = shoe_history.dropna(subset=[column])
             if not chart_data.empty:
                 st.markdown(f"##### {title}")
 
