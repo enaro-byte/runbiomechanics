@@ -137,7 +137,26 @@ with st.sidebar:
                     f"Connexion réussie ! {len(activities)} activité(s) récupérée(s)."
                 )
                 st.write("Champs reçus par Garmin :")
-                st.write(sorted(activities[0].keys()))
+                                fields_to_check = [
+                    "activityType",
+                    "startTimeLocal",
+                    "distance",
+                    "duration",
+                    "averageHR",
+                    "averageRunningCadenceInStepsPerMinute",
+                    "averageSpeed",
+                    "avgStrideLength",
+                    "avgVerticalOscillation",
+                    "avgVerticalRatio",
+                    "avgGroundContactTime",
+                    "avgPower",
+                    "elevationGain",
+                ]
+
+                st.json({
+                    field: activities[0].get(field)
+                    for field in fields_to_check
+                })
             else:
                 st.warning("Connexion réussie, mais aucune activité trouvée.")
 
