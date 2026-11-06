@@ -128,6 +128,7 @@ with st.sidebar:
     st.markdown("---")
     st.header("3. Connexion Garmin")
 
+   
     if st.button("Tester la connexion Garmin"):
         try:
             activities = test_garmin_connection()
@@ -136,8 +137,8 @@ with st.sidebar:
                 st.success(
                     f"Connexion réussie ! {len(activities)} activité(s) récupérée(s)."
                 )
-                st.write("Champs reçus par Garmin :")
-                                fields_to_check = [
+
+                fields_to_check = [
                     "activityType",
                     "startTimeLocal",
                     "distance",
@@ -157,6 +158,7 @@ with st.sidebar:
                     field: activities[0].get(field)
                     for field in fields_to_check
                 })
+
             else:
                 st.warning("Connexion réussie, mais aucune activité trouvée.")
 
