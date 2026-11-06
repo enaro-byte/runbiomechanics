@@ -508,6 +508,7 @@ overview_tab, physiology_tab, biomechanics_tab, shoes_tab, help_tab = st.tabs(
 with overview_tab:
     st.markdown("### Distance de chaque sortie")
 
+    
     distance_chart = px.bar(
         filtered,
         x="date",
@@ -521,7 +522,35 @@ with overview_tab:
             "date": "Date",
             "distance_km": "Distance (km)",
         },
+        color_discrete_sequence=["#20DCC3"],
     )
+
+    distance_chart.update_layout(
+        paper_bgcolor="#080F17",
+        plot_bgcolor="#111D29",
+        font=dict(
+            color="#F0F5F8",
+            family="Arial",
+        ),
+        xaxis=dict(
+            title_font=dict(color="#F0F5F8"),
+            tickfont=dict(color="#A6B8C7"),
+            gridcolor="#233746",
+        ),
+        yaxis=dict(
+            title_font=dict(color="#F0F5F8"),
+            tickfont=dict(color="#A6B8C7"),
+            gridcolor="#233746",
+        ),
+        margin=dict(l=20, r=20, t=30, b=20),
+    )
+
+    distance_chart.update_traces(
+        marker_line_color="#20DCC3",
+        marker_line_width=1,
+        opacity=0.9,
+    )
+
 
     st.plotly_chart(distance_chart, use_container_width=True)
 
