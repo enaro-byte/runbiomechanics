@@ -121,7 +121,7 @@ px.defaults.color_discrete_sequence = [
 BASE_DIR = Path(__file__).parent
 SAMPLE_FILE = BASE_DIR / "data" / "sample_runs.csv"
 
-
+st.write("TEST HTML : version Streamlit", st.__version__)
 st.html("""
 <div style="
     padding: 28px 30px;
