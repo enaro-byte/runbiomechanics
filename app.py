@@ -221,24 +221,50 @@ def prepare_garmin_runs(raw_data):
 
 
 def test_garmin_connection():
-    """Récupère les cinq dernières activités de course Garmin."""
+    """Récupère tout l'historique des courses Garmin, par pages de 20."""
 
     api_key = st.secrets.get("GARMIN_PERSONAL_API_KEY")
 
     if not api_key:
         raise ValueError("Clé Garmin introuvable dans les Secrets.")
 
+    all_activities = []
+    start = 0
+    page_size = 20
+
     with PersonalApiAuthenticator() as authenticator:
         token = authenticator.obtain_token(api_key)
 
     with GarminPersonalApiClient(token.access_token) as client:
-        activities = client.search_activities(
-            start=0,
-            limit=5,
-            activity_type="running",
-        )
+        while True:
+            page = client.search_activities(
+                start=start,
+                limit=page_size,
+                activity_type="running",
+            )
 
-    return activities
+            if not page:
+                break
+
+            # Garmin peut regrouper plusieurs types de course.
+            # On conserve uniquement la course à pied classique.
+            running_activities = [
+                activity
+                for activity in page
+                if isinstance(activity.get("activityType"), dict)
+                and activity["activityType"].get("typeKey") == "running"
+            ]
+
+            all_activities.extend(running_activities)
+
+            # L'offset avance du nombre d'activités reçues,
+            # pas du nombre conservé après filtrage.
+            start += len(page)
+
+            if len(page) < page_size:
+                break
+
+    return all_activities
 
 
 def convert_garmin_activities(activities):
@@ -323,14 +349,14 @@ with st.sidebar:
     st.markdown("---")
     st.header("3. Connexion Garmin")
 
-    if st.button("Récupérer les 5 dernières sorties"):
+    if st.button("Récupérer tout mon historique Garmin"):
         try:
             activities = test_garmin_connection()
             st.session_state.garmin_activities = activities
 
             if activities:
                 st.success(
-                    f"{len(activities)} activité(s) Garmin récupérée(s)."
+                    f"{len(activities)} sortie(s) de course à pied récupérée(s)."
                 )
             else:
                 st.warning("Connexion réussie, mais aucune activité trouvée.")
