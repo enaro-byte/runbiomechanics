@@ -151,7 +151,7 @@ st.markdown(
             Explorer · Mesurer · Comprendre la performance en course à pied
         </div>
     </div>
-    """,
+    """),
     unsafe_allow_html=True,
 )
 
