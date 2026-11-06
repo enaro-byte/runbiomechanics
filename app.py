@@ -288,7 +288,18 @@ with shoes_tab:
     shoe_history = data[
         data["shoes"] == "Nike Pegasus 41"
     ].sort_values("date").copy()
+st.write("### Diagnostic des chaussures")
 
+st.write("Nombre total de séances :", len(data))
+st.write("Distance totale :", data["distance_km"].sum())
+
+st.write("Répartition des chaussures :")
+st.write(data["shoes"].value_counts(dropna=False))
+
+st.write(
+    "Distance associée aux Pegasus 41 :",
+    shoe_history["distance_km"].sum()
+)
     if not shoe_history.empty:
 
         shoe_history["shoe_cumulative_km"] = (
@@ -327,8 +338,11 @@ with shoes_tab:
         ]
 
         for column, title, axis_label in mileage_metrics:
-            chart_data = shoe_history.dropna(subset=[column])
+            if column not in shoe_history.columns:
+    st.info(f"La colonne {column} est absente des données.")
+    continue
 
+chart_data = shoe_history.dropna(subset=[column])
             if not chart_data.empty:
                 st.markdown(f"##### {title}")
 
