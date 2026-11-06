@@ -122,38 +122,42 @@ BASE_DIR = Path(__file__).parent
 SAMPLE_FILE = BASE_DIR / "data" / "sample_runs.csv"
 
 
-st.markdown(
-    textwrap.dedent("""
-    <div style="padding: 28px 30px;
-                background: linear-gradient(120deg, #111D29, #142C38);
-                border: 1px solid #284353;
-                border-radius: 16px;
-                margin-bottom: 25px;">
-
-        <div style="color: #20DCC3;
-                    font-size: 12px;
-                    font-weight: 700;
-                    letter-spacing: 3px;
-                    margin-bottom: 12px;">
-            RUNNING PERFORMANCE LAB
-        </div>
-
-        <div style="font-size: 38px;
-                    font-weight: 800;
-                    color: #F0F5F8;
-                    letter-spacing: -1px;">
-            RunBiomechanics<span style="color:#20DCC3;">.</span>
-        </div>
-
-        <div style="color: #A6B8C7;
-                    font-size: 16px;
-                    margin-top: 8px;">
-            Explorer · Mesurer · Comprendre la performance en course à pied
-        </div>
+st.html("""
+<div style="
+    padding: 28px 30px;
+    background: linear-gradient(120deg, #111D29, #142C38);
+    border: 1px solid #284353;
+    border-radius: 16px;
+    margin-bottom: 25px;
+">
+    <div style="
+        color: #20DCC3;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 3px;
+        margin-bottom: 12px;
+    ">
+        RUNNING PERFORMANCE LAB
     </div>
-    """),
-    unsafe_allow_html=True,
-)
+
+    <div style="
+        font-size: 38px;
+        font-weight: 800;
+        color: #F0F5F8;
+        letter-spacing: -1px;
+    ">
+        RunBiomechanics<span style="color:#20DCC3;">.</span>
+    </div>
+
+    <div style="
+        color: #A6B8C7;
+        font-size: 16px;
+        margin-top: 8px;
+    ">
+        Explorer · Mesurer · Comprendre la performance en course à pied
+    </div>
+</div>
+""")
 
 st.info(
     "**Prototype éducatif :** les résultats décrivent uniquement les données importées. "
