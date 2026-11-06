@@ -1,5 +1,6 @@
 from pathlib import Path
 
+import textwrap
 import pandas as pd
 import plotly.express as px
 import streamlit as st
@@ -122,7 +123,7 @@ SAMPLE_FILE = BASE_DIR / "data" / "sample_runs.csv"
 
 
 st.markdown(
-    """
+    textwrap.dedent("""
     <div style="padding: 28px 30px;
                 background: linear-gradient(120deg, #111D29, #142C38);
                 border: 1px solid #284353;
