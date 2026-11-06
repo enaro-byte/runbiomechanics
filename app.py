@@ -15,15 +15,149 @@ st.set_page_config(
     layout="wide",
 )
 
+# =====================================================
+# IDENTITÉ VISUELLE — RUNBIOMECHANICS
+# =====================================================
+
+st.markdown("""
+<style>
+    /* Fond général */
+    .stApp {
+        background-color: #080F17;
+        color: #F0F5F8;
+    }
+
+    /* Zone principale */
+    .block-container {
+        max-width: 1450px;
+        padding-top: 2.5rem;
+        padding-bottom: 3rem;
+    }
+
+    /* Barre latérale */
+    section[data-testid="stSidebar"] {
+        background-color: #0D1722;
+        border-right: 1px solid #233342;
+    }
+
+    /* Titres */
+    h1, h2, h3, h4 {
+        color: #F0F5F8 !important;
+    }
+
+    /* Texte secondaire */
+    .stCaption, [data-testid="stCaptionContainer"] {
+        color: #8FA3B5;
+    }
+
+    /* Cartes statistiques */
+    [data-testid="stMetric"] {
+        background-color: #111D29;
+        border: 1px solid #233746;
+        border-radius: 12px;
+        padding: 18px;
+    }
+
+    [data-testid="stMetricLabel"] {
+        color: #8FA3B5 !important;
+    }
+
+    [data-testid="stMetricValue"] {
+        color: #20DCC3 !important;
+    }
+
+    /* Onglets */
+    .stTabs [data-baseweb="tab"] {
+        color: #8FA3B5;
+        font-weight: 600;
+    }
+
+    .stTabs [aria-selected="true"] {
+        color: #20DCC3 !important;
+    }
+
+    .stTabs [data-baseweb="tab-highlight"] {
+        background-color: #20DCC3;
+    }
+
+    /* Boutons */
+    .stButton > button {
+        background-color: #20DCC3;
+        color: #08131B;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+    }
+
+    .stButton > button:hover {
+        background-color: #61EAD8;
+        color: #08131B;
+    }
+
+    /* Tableaux */
+    [data-testid="stDataFrame"] {
+        border: 1px solid #233746;
+        border-radius: 10px;
+    }
+
+    /* Séparateurs */
+    hr {
+        border-color: #233746;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+# Apparence par défaut des graphiques Plotly
+px.defaults.template = "plotly_dark"
+px.defaults.color_discrete_sequence = [
+    "#20DCC3",
+    "#4D9DE0",
+    "#A78BFA",
+    "#F0B45A",
+    "#F1789B",
+]
+
 BASE_DIR = Path(__file__).parent
 SAMPLE_FILE = BASE_DIR / "data" / "sample_runs.csv"
 
-st.title("🏃 RunBiomechanics")
-st.subheader("Explorer les données de course à pied")
-st.markdown(
-    "Un petit laboratoire personnel pour suivre ses sorties et explorer quelques "
-    "indicateurs d'entraînement, de physiologie et d'équipement."
-)
+
+st.markdown("""
+<div style="
+    padding: 28px 30px;
+    background: linear-gradient(120deg, #111D29, #142C38);
+    border: 1px solid #284353;
+    border-radius: 16px;
+    margin-bottom: 25px;
+">
+    <div style="
+        color: #20DCC3;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 3px;
+        margin-bottom: 12px;
+    ">
+        RUNNING PERFORMANCE LAB
+    </div>
+
+    <div style="
+        font-size: 38px;
+        font-weight: 800;
+        color: #F0F5F8;
+        letter-spacing: -1px;
+    ">
+        RunBiomechanics<span style="color:#20DCC3;">.</span>
+    </div>
+
+    <div style="
+        color: #A6B8C7;
+        font-size: 16px;
+        margin-top: 8px;
+    ">
+        Explorer · Mesurer · Comprendre la performance en course à pied
+    </div>
+</div>
+""", unsafe_allow_html=True)
+
 st.info(
     "**Prototype éducatif :** les résultats décrivent uniquement les données importées. "
     "Ils ne constituent ni une mesure biomécanique complète, ni un diagnostic médical, "
