@@ -3,7 +3,10 @@ from pathlib import Path
 import pandas as pd
 import plotly.express as px
 import streamlit as st
-
+from garmin_personal_api import (
+    GarminPersonalApiClient,
+    PersonalApiAuthenticator,
+)
 from metrics import format_pace, prepare_runs, summarize_runs
 
 st.set_page_config(
@@ -101,6 +104,45 @@ def prepare_garmin_runs(raw_data):
     result["surface"] = "Non renseignée"
 
     return result.reset_index(drop=True)
+
+def test_garmin_connection():
+    api_key = st.secrets.get("GARMIN_PERSONAL_API_KEY")
+
+    if not api_key:
+        raise ValueError("Clé Garmin introuvable dans les Secrets.")
+
+    with PersonalApiAuthenticator() as authenticator:
+        token = authenticator.obtain_token(api_key)
+
+    with GarminPersonalApiClient(token.access_token) as client:
+        activities = client.search_activities(
+            start=0,
+            limit=5,
+            activity_type="running",
+        )
+
+    return activities
+
+
+with st.sidebar:
+    st.markdown("---")
+    st.header("3. Connexion Garmin")
+
+    if st.button("Tester la connexion Garmin"):
+        try:
+            activities = test_garmin_connection()
+
+            if activities:
+                st.success(
+                    f"Connexion réussie ! {len(activities)} activité(s) récupérée(s)."
+                )
+                st.write("Champs reçus par Garmin :")
+                st.write(sorted(activities[0].keys()))
+            else:
+                st.warning("Connexion réussie, mais aucune activité trouvée.")
+
+        except Exception as error:
+            st.error(f"Erreur de connexion : {error}")
 
 
 if uploaded_file is not None:
