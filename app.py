@@ -1,5 +1,6 @@
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 import plotly.express as px
 import streamlit as st
@@ -767,10 +768,127 @@ with biomechanics_tab:
         else:
             st.info(f"Aucune donnée disponible pour {title}.")
 
+    st.markdown("### Relation entre cadence et allure")
+
+    st.write(
+        "Chaque point représente une sortie. Cette analyse permet d'observer "
+        "si ta cadence est associée à ton allure : une allure plus faible "
+        "en min/km correspond à une vitesse plus élevée."
+    )
+
+    relation_columns = ["pace_min_km", "cadence_spm"]
+    if all(column in filtered.columns for column in relation_columns):
+        relation_data = filtered.dropna(
+            subset=relation_columns
+        ).copy()
+
+        relation_data = relation_data[
+            (relation_data["pace_min_km"] > 0)
+            & (relation_data["cadence_spm"] > 0)
+        ]
+
+        if len(relation_data) >= 2:
+            relation_chart = px.scatter(
+                relation_data,
+                x="pace_min_km",
+                y="cadence_spm",
+                hover_data=[
+                    column
+                    for column in ["date", "distance_km", "pace_label"]
+                    if column in relation_data.columns
+                ],
+                labels={
+                    "pace_min_km": "Allure (min/km)",
+                    "cadence_spm": "Cadence (pas/min)",
+                    "date": "Date",
+                    "distance_km": "Distance (km)",
+                    "pace_label": "Allure affichée",
+                },
+                color_discrete_sequence=["#20DCC3"],
+            )
+
+            # Ajoute une droite de tendance si les allures sont différentes.
+            if relation_data["pace_min_km"].nunique() >= 2:
+                x_values = relation_data["pace_min_km"].to_numpy(dtype=float)
+                y_values = relation_data["cadence_spm"].to_numpy(dtype=float)
+                slope, intercept = np.polyfit(x_values, y_values, 1)
+
+                x_line = np.linspace(x_values.min(), x_values.max(), 100)
+                y_line = slope * x_line + intercept
+
+                relation_chart.add_scatter(
+                    x=x_line,
+                    y=y_line,
+                    mode="lines",
+                    name="Tendance linéaire",
+                    line=dict(
+                        color="#F0B45A",
+                        width=2,
+                        dash="dash",
+                    ),
+                )
+
+            relation_chart.update_layout(
+                paper_bgcolor="#080F17",
+                plot_bgcolor="#111D29",
+                font=dict(color="#F0F5F8"),
+                xaxis=dict(
+                    title_font=dict(color="#F0F5F8"),
+                    tickfont=dict(color="#A6B8C7"),
+                    gridcolor="#233746",
+                ),
+                yaxis=dict(
+                    title_font=dict(color="#F0F5F8"),
+                    tickfont=dict(color="#A6B8C7"),
+                    gridcolor="#233746",
+                ),
+                legend=dict(font=dict(color="#A6B8C7")),
+                margin=dict(l=20, r=20, t=30, b=20),
+            )
+
+            st.plotly_chart(
+                relation_chart,
+                use_container_width=True,
+            )
+
+            if (
+                len(relation_data) >= 3
+                and relation_data["pace_min_km"].nunique() >= 2
+                and relation_data["cadence_spm"].nunique() >= 2
+            ):
+                correlation = relation_data[
+                    ["pace_min_km", "cadence_spm"]
+                ].corr().iloc[0, 1]
+
+                st.metric(
+                    "Corrélation cadence / allure (Pearson)",
+                    f"{correlation:.2f}",
+                    help=(
+                        "Le coefficient varie de -1 à +1. Il décrit une "
+                        "association linéaire, pas une relation de cause à effet."
+                    ),
+                )
+
+            st.caption(
+                f"Analyse basée sur {len(relation_data)} sortie(s). "
+                "La droite représente une tendance statistique simple."
+            )
+        else:
+            st.info(
+                "Il faut au moins deux sorties avec une allure et une cadence "
+                "renseignées pour afficher cette analyse."
+            )
+    else:
+        st.info(
+            "Les données d'allure ou de cadence nécessaires à cette analyse "
+            "ne sont pas disponibles."
+        )
+
     st.warning(
         "Ces graphiques permettent d'observer des évolutions et des associations. "
         "Ils ne permettent pas, à eux seuls, de conclure à une amélioration "
-        "ou à une dégradation de ta technique de course."
+        "ou à une dégradation de ta technique de course. La cadence dépend "
+        "notamment de l'allure, du terrain, de la fatigue et de la personne."
     )
 
 
