@@ -884,6 +884,131 @@ with biomechanics_tab:
             "ne sont pas disponibles."
         )
 
+    st.markdown("### Relation entre longueur de foulée et allure")
+
+    st.write(
+        "Chaque point représente une sortie. Cette analyse permet d'observer "
+        "si tes foulées ont tendance à être plus longues lorsque tu cours plus "
+        "vite. Une allure plus faible en min/km correspond à une vitesse plus élevée."
+    )
+
+    stride_relation_columns = ["pace_min_km", "stride_length_m"]
+    if all(column in filtered.columns for column in stride_relation_columns):
+        stride_relation_data = filtered.dropna(
+            subset=stride_relation_columns
+        ).copy()
+
+        stride_relation_data = stride_relation_data[
+            (stride_relation_data["pace_min_km"] > 0)
+            & (stride_relation_data["stride_length_m"] > 0)
+        ]
+
+        if len(stride_relation_data) >= 2:
+            stride_chart = px.scatter(
+                stride_relation_data,
+                x="pace_min_km",
+                y="stride_length_m",
+                hover_data=[
+                    column
+                    for column in ["date", "distance_km", "pace_label"]
+                    if column in stride_relation_data.columns
+                ],
+                labels={
+                    "pace_min_km": "Allure (min/km)",
+                    "stride_length_m": "Longueur de foulée (m)",
+                    "date": "Date",
+                    "distance_km": "Distance (km)",
+                    "pace_label": "Allure affichée",
+                },
+                color_discrete_sequence=["#20DCC3"],
+            )
+
+            if stride_relation_data["pace_min_km"].nunique() >= 2:
+                stride_x = stride_relation_data[
+                    "pace_min_km"
+                ].to_numpy(dtype=float)
+                stride_y = stride_relation_data[
+                    "stride_length_m"
+                ].to_numpy(dtype=float)
+                stride_slope, stride_intercept = np.polyfit(
+                    stride_x, stride_y, 1
+                )
+
+                stride_x_line = np.linspace(
+                    stride_x.min(), stride_x.max(), 100
+                )
+                stride_y_line = (
+                    stride_slope * stride_x_line + stride_intercept
+                )
+
+                stride_chart.add_scatter(
+                    x=stride_x_line,
+                    y=stride_y_line,
+                    mode="lines",
+                    name="Tendance linéaire",
+                    line=dict(
+                        color="#F0B45A",
+                        width=2,
+                        dash="dash",
+                    ),
+                )
+
+            stride_chart.update_layout(
+                paper_bgcolor="#080F17",
+                plot_bgcolor="#111D29",
+                font=dict(color="#F0F5F8"),
+                xaxis=dict(
+                    title_font=dict(color="#F0F5F8"),
+                    tickfont=dict(color="#A6B8C7"),
+                    gridcolor="#233746",
+                ),
+                yaxis=dict(
+                    title_font=dict(color="#F0F5F8"),
+                    tickfont=dict(color="#A6B8C7"),
+                    gridcolor="#233746",
+                ),
+                legend=dict(font=dict(color="#A6B8C7")),
+                margin=dict(l=20, r=20, t=30, b=20),
+            )
+
+            st.plotly_chart(
+                stride_chart,
+                use_container_width=True,
+            )
+
+            if (
+                len(stride_relation_data) >= 3
+                and stride_relation_data["pace_min_km"].nunique() >= 2
+                and stride_relation_data["stride_length_m"].nunique() >= 2
+            ):
+                stride_correlation = stride_relation_data[
+                    ["pace_min_km", "stride_length_m"]
+                ].corr().iloc[0, 1]
+
+                st.metric(
+                    "Corrélation longueur de foulée / allure (Pearson)",
+                    f"{stride_correlation:.2f}",
+                    help=(
+                        "Le coefficient varie de -1 à +1. Il décrit une "
+                        "association linéaire, pas une relation de cause à effet."
+                    ),
+                )
+
+            st.caption(
+                f"Analyse basée sur {len(stride_relation_data)} sortie(s). "
+                "La droite représente une tendance statistique simple."
+            )
+        else:
+            st.info(
+                "Il faut au moins deux sorties avec une allure et une longueur "
+                "de foulée renseignées pour afficher cette analyse."
+            )
+    else:
+        st.info(
+            "Les données d'allure ou de longueur de foulée nécessaires à cette "
+            "analyse ne sont pas disponibles."
+        )
+
     st.warning(
         "Ces graphiques permettent d'observer des évolutions et des associations. "
         "Ils ne permettent pas, à eux seuls, de conclure à une amélioration "
