@@ -506,9 +506,48 @@ overview_tab, physiology_tab, biomechanics_tab, shoes_tab, help_tab = st.tabs(
 # =====================================================
 
 with overview_tab:
-    st.markdown("### Distance de chaque sortie")
+    st.markdown("### Profil biomécanique")
 
-    
+    st.write(
+        "Les valeurs ci-dessous résument les indicateurs disponibles dans "
+        "tes sorties importées. Elles donnent un premier aperçu de ta foulée."
+    )
+
+    biomech_kpis = [
+        ("cadence_spm", "Cadence moyenne", "pas/min", 0),
+        ("stride_length_m", "Longueur de foulée", "m", 2),
+        ("vertical_oscillation_cm", "Oscillation verticale", "cm", 1),
+        ("ground_contact_time_ms", "Contact au sol", "ms", 0),
+    ]
+
+    kpi_columns = st.columns(4)
+
+    for display_column, (column, label, unit, decimals) in zip(
+        kpi_columns, biomech_kpis
+    ):
+        if column in filtered.columns:
+            values = pd.to_numeric(filtered[column], errors="coerce").dropna()
+        else:
+            values = pd.Series(dtype="float64")
+
+        if not values.empty:
+            average = values.mean()
+            display_column.metric(
+                label,
+                f"{average:.{decimals}f} {unit}",
+                help=f"Moyenne calculée sur {len(values)} sortie(s) avec cette donnée.",
+            )
+        else:
+            display_column.metric(label, "Non disponible")
+
+    st.caption(
+        "Ces moyennes sont descriptives : elles dépendent notamment de l'allure, "
+        "du terrain et des conditions de chaque sortie. Elles ne constituent pas "
+        "à elles seules une note de qualité de ta foulée."
+    )
+
+    st.markdown("### Historique des distances")
+
     distance_chart = px.bar(
         filtered,
         x="date",
@@ -528,10 +567,7 @@ with overview_tab:
     distance_chart.update_layout(
         paper_bgcolor="#080F17",
         plot_bgcolor="#111D29",
-        font=dict(
-            color="#F0F5F8",
-            family="Arial",
-        ),
+        font=dict(color="#F0F5F8"),
         xaxis=dict(
             title_font=dict(color="#F0F5F8"),
             tickfont=dict(color="#A6B8C7"),
@@ -551,10 +587,9 @@ with overview_tab:
         opacity=0.9,
     )
 
-
     st.plotly_chart(distance_chart, use_container_width=True)
 
-    st.markdown("### Historique")
+    st.markdown("### Historique détaillé")
 
     columns_to_show = [
         column
