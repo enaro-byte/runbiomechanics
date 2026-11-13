@@ -1009,6 +1009,131 @@ with biomechanics_tab:
             "analyse ne sont pas disponibles."
         )
 
+    st.markdown("### Relation entre oscillation verticale et allure")
+
+    st.write(
+        "Chaque point représente une sortie. Cette analyse permet d'observer "
+        "si ton oscillation verticale varie selon ton allure. Une allure plus "
+        "faible en min/km correspond à une vitesse plus élevée."
+    )
+
+    vertical_relation_columns = ["pace_min_km", "vertical_oscillation_cm"]
+    if all(column in filtered.columns for column in vertical_relation_columns):
+        vertical_relation_data = filtered.dropna(
+            subset=vertical_relation_columns
+        ).copy()
+
+        vertical_relation_data = vertical_relation_data[
+            (vertical_relation_data["pace_min_km"] > 0)
+            & (vertical_relation_data["vertical_oscillation_cm"] > 0)
+        ]
+
+        if len(vertical_relation_data) >= 2:
+            vertical_chart = px.scatter(
+                vertical_relation_data,
+                x="pace_min_km",
+                y="vertical_oscillation_cm",
+                hover_data=[
+                    column
+                    for column in ["date", "distance_km", "pace_label"]
+                    if column in vertical_relation_data.columns
+                ],
+                labels={
+                    "pace_min_km": "Allure (min/km)",
+                    "vertical_oscillation_cm": "Oscillation verticale (cm)",
+                    "date": "Date",
+                    "distance_km": "Distance (km)",
+                    "pace_label": "Allure affichée",
+                },
+                color_discrete_sequence=["#20DCC3"],
+            )
+
+            if vertical_relation_data["pace_min_km"].nunique() >= 2:
+                vertical_x = vertical_relation_data[
+                    "pace_min_km"
+                ].to_numpy(dtype=float)
+                vertical_y = vertical_relation_data[
+                    "vertical_oscillation_cm"
+                ].to_numpy(dtype=float)
+                vertical_slope, vertical_intercept = np.polyfit(
+                    vertical_x, vertical_y, 1
+                )
+
+                vertical_x_line = np.linspace(
+                    vertical_x.min(), vertical_x.max(), 100
+                )
+                vertical_y_line = (
+                    vertical_slope * vertical_x_line + vertical_intercept
+                )
+
+                vertical_chart.add_scatter(
+                    x=vertical_x_line,
+                    y=vertical_y_line,
+                    mode="lines",
+                    name="Tendance linéaire",
+                    line=dict(
+                        color="#F0B45A",
+                        width=2,
+                        dash="dash",
+                    ),
+                )
+
+            vertical_chart.update_layout(
+                paper_bgcolor="#080F17",
+                plot_bgcolor="#111D29",
+                font=dict(color="#F0F5F8"),
+                xaxis=dict(
+                    title_font=dict(color="#F0F5F8"),
+                    tickfont=dict(color="#A6B8C7"),
+                    gridcolor="#233746",
+                ),
+                yaxis=dict(
+                    title_font=dict(color="#F0F5F8"),
+                    tickfont=dict(color="#A6B8C7"),
+                    gridcolor="#233746",
+                ),
+                legend=dict(font=dict(color="#A6B8C7")),
+                margin=dict(l=20, r=20, t=30, b=20),
+            )
+
+            st.plotly_chart(
+                vertical_chart,
+                use_container_width=True,
+            )
+
+            if (
+                len(vertical_relation_data) >= 3
+                and vertical_relation_data["pace_min_km"].nunique() >= 2
+                and vertical_relation_data["vertical_oscillation_cm"].nunique() >= 2
+            ):
+                vertical_correlation = vertical_relation_data[
+                    ["pace_min_km", "vertical_oscillation_cm"]
+                ].corr().iloc[0, 1]
+
+                st.metric(
+                    "Corrélation oscillation verticale / allure (Pearson)",
+                    f"{vertical_correlation:.2f}",
+                    help=(
+                        "Le coefficient varie de -1 à +1. Il décrit une "
+                        "association linéaire, pas une relation de cause à effet."
+                    ),
+                )
+
+            st.caption(
+                f"Analyse basée sur {len(vertical_relation_data)} sortie(s). "
+                "Une oscillation plus faible n'est pas automatiquement meilleure."
+            )
+        else:
+            st.info(
+                "Il faut au moins deux sorties avec une allure et une oscillation "
+                "verticale renseignées pour afficher cette analyse."
+            )
+    else:
+        st.info(
+            "Les données d'allure ou d'oscillation verticale nécessaires à cette "
+            "analyse ne sont pas disponibles."
+        )
+
     st.warning(
         "Ces graphiques permettent d'observer des évolutions et des associations. "
         "Ils ne permettent pas, à eux seuls, de conclure à une amélioration "
