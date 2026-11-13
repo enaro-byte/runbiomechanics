@@ -1126,11 +1126,135 @@ with biomechanics_tab:
         else:
             st.info(
                 "Il faut au moins deux sorties avec une allure et une oscillation "
-                "verticale renseignées pour afficher cette analyse."
+                "au sol renseigné pour afficher cette analyse."
             )
     else:
         st.info(
             "Les données d'allure ou d'oscillation verticale nécessaires à cette "
+            "analyse ne sont pas disponibles."
+        )
+
+    st.markdown("### Relation entre temps de contact au sol et allure")
+
+    st.write(
+        "Chaque point représente une sortie. Cette analyse permet d'observer "
+        "si ton temps de contact au sol varie selon ton allure. Une allure plus "
+        "faible en min/km correspond à une vitesse plus élevée."
+    )
+
+    contact_relation_columns = ["pace_min_km", "ground_contact_time_ms"]
+    if all(column in filtered.columns for column in contact_relation_columns):
+        contact_relation_data = filtered.dropna(
+            subset=contact_relation_columns
+        ).copy()
+
+        contact_relation_data = contact_relation_data[
+            (contact_relation_data["pace_min_km"] > 0)
+            & (contact_relation_data["ground_contact_time_ms"] > 0)
+        ]
+
+        if len(contact_relation_data) >= 2:
+            contact_chart = px.scatter(
+                contact_relation_data,
+                x="pace_min_km",
+                y="ground_contact_time_ms",
+                hover_data=[
+                    column
+                    for column in ["date", "distance_km", "pace_label"]
+                    if column in contact_relation_data.columns
+                ],
+                labels={
+                    "pace_min_km": "Allure (min/km)",
+                    "ground_contact_time_ms": "Temps de contact au sol (ms)",
+                    "date": "Date",
+                    "distance_km": "Distance (km)",
+                    "pace_label": "Allure affichée",
+                },
+                color_discrete_sequence=["#20DCC3"],
+            )
+
+            if contact_relation_data["pace_min_km"].nunique() >= 2:
+                contact_x = contact_relation_data[
+                    "pace_min_km"
+                ].to_numpy(dtype=float)
+                contact_y = contact_relation_data[
+                    "ground_contact_time_ms"
+                ].to_numpy(dtype=float)
+                contact_slope, contact_intercept = np.polyfit(
+                    contact_x, contact_y, 1
+                )
+
+                contact_x_line = np.linspace(
+                    contact_x.min(), contact_x.max(), 100
+                )
+                contact_y_line = (
+                    contact_slope * contact_x_line + contact_intercept
+                )
+
+                contact_chart.add_scatter(
+                    x=contact_x_line,
+                    y=contact_y_line,
+                    mode="lines",
+                    name="Tendance linéaire",
+                    line=dict(
+                        color="#F0B45A",
+                        width=2,
+                        dash="dash",
+                    ),
+                )
+
+            contact_chart.update_layout(
+                paper_bgcolor="#080F17",
+                plot_bgcolor="#111D29",
+                font=dict(color="#F0F5F8"),
+                xaxis=dict(
+                    title_font=dict(color="#F0F5F8"),
+                    tickfont=dict(color="#A6B8C7"),
+                    gridcolor="#233746",
+                ),
+                yaxis=dict(
+                    title_font=dict(color="#F0F5F8"),
+                    tickfont=dict(color="#A6B8C7"),
+                    gridcolor="#233746",
+                ),
+                legend=dict(font=dict(color="#A6B8C7")),
+                margin=dict(l=20, r=20, t=30, b=20),
+            )
+
+            st.plotly_chart(
+                contact_chart,
+                use_container_width=True,
+            )
+
+            if (
+                len(contact_relation_data) >= 3
+                and contact_relation_data["pace_min_km"].nunique() >= 2
+                and contact_relation_data["ground_contact_time_ms"].nunique() >= 2
+            ):
+                contact_correlation = contact_relation_data[
+                    ["pace_min_km", "ground_contact_time_ms"]
+                ].corr().iloc[0, 1]
+
+                st.metric(
+                    "Corrélation temps de contact au sol / allure (Pearson)",
+                    f"{contact_correlation:.2f}",
+                    help=(
+                        "Le coefficient varie de -1 à +1. Il décrit une "
+                        "association linéaire, pas une relation de cause à effet."
+                    ),
+                )
+
+            st.caption(
+                f"Analyse basée sur {len(contact_relation_data)} sortie(s). "
+                "Un temps de contact plus court n'est pas automatiquement meilleur."
+            )
+        else:
+            st.info(
+                "Il faut au moins deux sorties avec une allure et un temps de contact au sol renseignés pour afficher cette analyse."
+            )
+    else:
+        st.info(
+            "Les données d'allure ou de temps de contact au sol nécessaires à cette "
             "analyse ne sont pas disponibles."
         )
 
